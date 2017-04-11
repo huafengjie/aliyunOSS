@@ -1,0 +1,92 @@
+<style>
+#echartstime{height:40px;position:absolute;margin-top:-280px;right:40px;}
+</style>
+<div id="jflytj" style="width:100%;height:200px;"></div>
+<div id="echartstime"><form action="" method="POST">
+    时间段：<input  id="s_starttime" name="s_starttime" type="text" value="{:I('post.s_starttime')}" /> ~ <input id="s_endtime" name="s_endtime" type="text" value="{:I('post.s_endtime')}" />
+    <button type="submit" class="btn btn-purple"  style="height:34px;line-height:10px;margin-top:-3px;width:34px;padding-left:6px;"><i class="ace-icon fa fa-search"></i></button></form>
+    <script type="text/javascript">
+        var start = {
+            elem: '#s_starttime',format: 'YYYY/MM/DD hh:mm:ss',istime: true,
+            choose: function(datas){
+                end.min = datas; //开始日选好后，重置结束日的最小日期
+                end.start = datas //将结束日的初始值设定为开始日
+            }
+        };
+        var end = {
+            elem: '#s_endtime',format: 'YYYY/MM/DD hh:mm:ss',istime: true,istoday: false,
+            choose: function(datas){
+                start.max = datas; //结束日选好后，重置开始日的最大日期
+            }
+        };
+        laydate(start);
+        laydate(end);
+    </script>
+</div>
+<script type="text/javascript">
+function toTooltip(name,value,content){
+    return '?　'+name+'　?'+ '<br/>访问次数：'+value+'<br />综合占比：'+(value/{$jfly_count}*100).toFixed(2)+"%"+ content; 
+}
+var myChart_jfly = echarts.init(document.getElementById('jflytj'));
+var option_jfly = {
+    title: {
+        text: '积分来源排行榜',
+        <if condition="$subtext eq true">
+        subtext:'总用户数：{$zongjifen.usersnumber}　历史积分：{$zongjifen.integral_all}　可用积分：{$zongjifen.integral_enable}　已用积分：{$zongjifen.integral_used}'
+        </if>
+    },
+    tooltip : {
+        trigger: 'axis',
+        axisPointer : {            // 坐标轴指示器，坐标轴触发有效
+            type : 'shadow'        // 默认为直线，可选为：'line' | 'shadow'
+        },
+        formatter: function (params, ticket, callback) {
+            $.get('{:U("getJifenZongShu")}?name=' + params[0].name, function (content) {
+                callback(ticket, toTooltip(params[0].name,params[0].value,content));
+            });
+            return '<img src="__PUBLIC__/qwadmin/images/chaoren.gif" style="width:80px;"/>';
+        }
+    },
+    grid: {
+        left: '10px',
+        right: '10px',
+        top: '80px',
+        bottom: '20px',
+        containLabel: true,
+    },
+    xAxis: {
+        data: [{$jfly_str.cat}],
+    },
+    yAxis: { },
+    series: [{
+        name: '次数',
+        type: 'bar',
+        data: [{$jfly_str.val}],
+        label: {
+            normal: {
+                show: true,
+                position: 'outside',
+                textStyle:{
+                    fontSize:16,
+                    fontWeight:"bolder",
+                },
+            }
+        },
+        itemStyle: {
+            normal: {
+                color: function(params) {
+                    var colorList = ['#B5C334','#FCCE10','#E87C25','#60C0DD','#D7504B','#C6E579','#F4E001','#F0805A','#26C0C0'];
+                    return colorList[params.dataIndex]
+                },
+            }
+        }
+    }]
+};
+// 使用刚指定的配置项和数据显示图表。
+myChart_jfly.setOption(option_jfly);
+myChart_jfly.on('click', function (params) {
+    location.href="{:U('Inventory/logs')}?name="+params.name;
+});    
+window.onresize = myChart_jfly.resize;
+</script>
+<!--积分来源统计结束--> 
